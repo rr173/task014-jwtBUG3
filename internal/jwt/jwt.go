@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 )
@@ -176,6 +177,10 @@ func b64Decode(s string) ([]byte, error) {
 func Sign(claims Claims, secret []byte) (string, error) {
 	if len(secret) == 0 {
 		return "", ErrEmptySecret
+	}
+	// Defensively copy Extra to avoid data race if caller mutates the map concurrently.
+	if claims.Extra != nil {
+		claims.Extra = maps.Clone(claims.Extra)
 	}
 	header := map[string]string{"alg": AlgHS256, "typ": "JWT"}
 	hb, err := json.Marshal(header)
